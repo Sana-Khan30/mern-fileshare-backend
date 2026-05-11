@@ -8,26 +8,39 @@ require("dotenv").config();
 
 const app = express();
 
+// 1. CSP Middleware (Font aur Security Errors ke liye)
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self' https://mern-fileshare-backend.vercel.app; font-src 'self' data: https://mern-fileshare-backend.vercel.app; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+  );
+  next();
+});
+
+// 2. CORS Settings
 app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://mern-fileshare-frontend.vercel.app"
   ],
-  methods: ["GET", "POST", "DELETE"],
+  methods: ["GET", "POST", "DELETE", "OPTIONS"],
+  credentials: true
 }));
 
 app.use(express.json());
 
+// Cloudinary Config
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
   api_secret: process.env.API_SECRET,
 });
 
+// MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log(err));
+  .catch((err) => console.log("MongoDB connection error:", err));
 
 const FileSchema = new mongoose.Schema({
   url: String,
@@ -47,6 +60,11 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage: storage });
 
+// API ROUTES
+app.get("/", (req, res) => {
+  res.send("Backend is running successfully!");
+});
+
 // UPLOAD
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
@@ -58,7 +76,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     });
     res.json(newFile);
   } catch (error) {
-    console.error("FULL ERROR:", error);
+    console.error("UPLOAD ERROR:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -92,8 +110,10 @@ app.delete("/api/files/:id", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Vercel Serverless Export
+const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
