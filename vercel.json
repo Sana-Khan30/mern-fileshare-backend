@@ -6,7 +6,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; font-src 'self' data: https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://res.cloudinary.com;"
+          "value": "default-src 'self' https://mern-fileshare-backend.vercel.app; font-src 'self' data: https://mern-fileshare-backend.vercel.app; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; script-src 'self' 'unsafe-inline' 'unsafe-eval';"
         }
       ]
     }
