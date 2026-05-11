@@ -7,13 +7,15 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://tumhari-app.vercel.app"  // <- Vercel URL apna likhna
+    "https://mern-fileshare-frontend.vercel.app"
   ],
   methods: ["GET", "POST", "DELETE"],
 }));
+
 app.use(express.json());
 
 cloudinary.config({
@@ -30,8 +32,8 @@ mongoose
 const FileSchema = new mongoose.Schema({
   url: String,
   name: String,
-  publicId: String,        // ← naya field: Cloudinary ka public_id save karega
-  resourceType: String,    // ← naya field: image/video/raw save karega
+  publicId: String,
+  resourceType: String,
   createdAt: { type: Date, default: Date.now },
 });
 const File = mongoose.model("File", FileSchema);
@@ -48,12 +50,11 @@ const upload = multer({ storage: storage });
 // UPLOAD
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
-    console.log("req.file:", req.file);
     const newFile = await File.create({
       url: req.file.path,
       name: req.file.originalname,
-      publicId: req.file.filename,           // ← Cloudinary public_id
-      resourceType: req.file.resource_type || "image", // ← resource type
+      publicId: req.file.filename,
+      resourceType: req.file.resource_type || "image",
     });
     res.json(newFile);
   } catch (error) {
@@ -78,7 +79,6 @@ app.delete("/api/files/:id", async (req, res) => {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ error: "File nahi mili" });
 
-    // Cloudinary se delete — publicId aur resourceType use karo
     if (file.publicId) {
       await cloudinary.uploader.destroy(file.publicId, {
         resource_type: file.resourceType || "image",
@@ -95,3 +95,5 @@ app.delete("/api/files/:id", async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;
